@@ -334,7 +334,12 @@ async function run() {
 
   // Rebuild the blog index and sitemap so every post — hand-written or
   // auto-generated — is actually linked and discoverable.
-  const allPosts = [...HARDCODED_POSTS, ...manifest.published];
+  // (Dedupe by slug: the manifest is seeded with the Radhe Radhe entry to
+  // stop it being regenerated, but HARDCODED_POSTS already represents it.)
+  const manifestPosts = manifest.published.filter(
+    p => !HARDCODED_POSTS.some(h => h.slug === p.slug)
+  );
+  const allPosts = [...HARDCODED_POSTS, ...manifestPosts];
   await writeFile(path.join(BLOG_DIR, "index.html"), buildBlogIndexHTML(allPosts));
   await writeFile(path.join(ROOT, "sitemap.xml"), buildSitemap(allPosts));
 
