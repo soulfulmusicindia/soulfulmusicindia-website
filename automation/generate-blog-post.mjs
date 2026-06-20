@@ -32,12 +32,14 @@ const HARDCODED_POSTS = [
     slug: "radhe-radhe-soulful-krishna-bhajan",
     title: 'The Meaning Behind "Radhe Radhe"',
     eyebrow: "Krishna",
+    thumbnail: thumbnailFor("482udqQzgeI"),
     excerpt: "Why repeating Radha's name is considered among the purest forms of Krishna bhakti."
   },
   {
     slug: "so-humm-return-to-stillness",
     title: 'What "So Humm" Actually Means',
     eyebrow: "Meditation",
+    thumbnail: null,
     excerpt: "A short meditation mantra with roots in the Upanishads, and how to use it."
   }
 ];
@@ -99,6 +101,10 @@ function excerptFrom(bodyHTML) {
   return text.length > 140 ? text.slice(0, 140).trim() + "…" : text;
 }
 
+function thumbnailFor(videoId) {
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+}
+
 async function writeArticleWithClaude(video) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("ANTHROPIC_API_KEY is not set.");
@@ -108,12 +114,17 @@ Context from the video's own description (for background only — do not copy it
 """${video.description}"""
 
 Requirements:
-- Write in plain, warm, accessible English for a general devotional/spiritual audience.
+- First, write a short, human, editorial article title — NOT the video title. It should read like a real blog headline about the meaning or theme (e.g. for a video called "HAR HAR SHAMBHO | Powerful Shiva Chant", a good article title would be something like "The Meaning Behind Har Har Shambho" or "Why Devotees Chant Har Har Shambho"). Keep it under 60 characters.
+- Then write the article body: plain, warm, accessible English for a general devotional/spiritual audience.
 - Include the meaning/significance of the deity, mantra, or practice involved.
 - Include practical guidance on when/how someone might use this track (puja, meditation, festivals, etc).
-- Structure with 2-4 <h2> subheadings.
-- Output ONLY clean HTML paragraph and heading tags (<p>, <h2>), no <html>/<head>/<body> wrapper, no markdown.
-- Do not invent specific scriptural quotations or citations.`;
+- Structure the body with 2-4 <h2> subheadings.
+- Do not invent specific scriptural quotations or citations.
+
+Output format — exactly this, nothing else before or after:
+TITLE: <the article title, plain text, no quotes, no HTML>
+---
+<the article body as clean HTML using only <p> and <h2> tags, no markdown, no wrapper tags>`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -131,7 +142,15 @@ Requirements:
 
   if (!res.ok) throw new Error(`Anthropic API error: ${res.status}`);
   const data = await res.json();
-  return data.content.map(b => b.text || "").join("\n");
+  const raw = data.content.map(b => b.text || "").join("\n").trim();
+
+  const titleMatch = raw.match(/^TITLE:\s*(.+?)\s*\n---\s*\n([\s\S]+)$/);
+  if (!titleMatch) {
+    // Fallback: if the model didn't follow the format exactly, use the
+    // video title rather than fail the whole run.
+    return { blogTitle: video.title, bodyHTML: raw };
+  }
+  return { blogTitle: titleMatch[1].trim(), bodyHTML: titleMatch[2].trim() };
 }
 
 function navAndFooter() {
@@ -175,7 +194,6 @@ function navAndFooter() {
     <span class="ambient-title" id="ambient-title">Tap play to begin a soulful session</span>
   </div>
   <button class="ambient-next" id="ambient-next" aria-label="Next track">⏭</button>
-  <button class="ambient-close" id="ambient-close" aria-label="Hide player">✕</button>
   <div id="ambient-yt-player" class="ambient-yt-hidden"></div>
 </div>
 <script src="../js/config.js"></script>
@@ -183,35 +201,37 @@ function navAndFooter() {
   };
 }
 
-function buildPageHTML({ title, slug, bodyHTML, videoId }) {
+function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbnail }) {
   const { nav, footer } = navAndFooter();
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${title} | Soulful Music India</title>
+<title>${blogTitle} | Soulful Music India</title>
 <link rel="canonical" href="${SITE_URL}/blog/${slug}.html">
 <link rel="icon" href="../assets/logo.png">
+<meta property="og:image" content="${thumbnail}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/style.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Article","headline":${JSON.stringify(title)},"publisher":{"@type":"Organization","name":"Soulful Music India"},"mainEntityOfPage":"${SITE_URL}/blog/${slug}.html"}
+{"@context":"https://schema.org","@type":"Article","headline":${JSON.stringify(blogTitle)},"image":"${thumbnail}","publisher":{"@type":"Organization","name":"Soulful Music India"},"mainEntityOfPage":"${SITE_URL}/blog/${slug}.html"}
 </script>
 </head>
 <body>
 ${nav}
 <section class="article-header">
   <div class="wrap">
-    <h1>${title}</h1>
+    <h1>${blogTitle}</h1>
   </div>
 </section>
 <article class="article-body">
   <a class="article-back" href="index.html">← Back to blog</a>
-  <div class="article-video"><iframe src="https://www.youtube.com/embed/${videoId}" title="${title}" allowfullscreen></iframe></div>
+  <div class="article-cover"><img src="${thumbnail}" alt="${videoTitle}" loading="lazy"></div>
   ${bodyHTML}
+  <div class="article-video"><iframe src="https://www.youtube.com/embed/${videoId}" title="${videoTitle}" allowfullscreen></iframe></div>
 </article>
 ${footer}
 </body>
@@ -222,9 +242,16 @@ function buildBlogIndexHTML(posts) {
   const { nav, footer } = navAndFooter();
   const cards = posts.map(p => `
       <a class="blog-card" href="${p.slug}.html">
-        <span class="eyebrow">${p.eyebrow}</span>
-        <h3>${p.title}</h3>
-        <p>${p.excerpt}</p>
+        <div class="blog-card-thumb">
+          ${p.thumbnail
+            ? `<img src="${p.thumbnail}" alt="${p.title}" loading="lazy">`
+            : `<div class="thumb-placeholder">🪔</div>`}
+        </div>
+        <div class="blog-card-body">
+          <span class="eyebrow">${p.eyebrow}</span>
+          <h3>${p.title}</h3>
+          <p>${p.excerpt}</p>
+        </div>
       </a>`).join("");
 
   return `<!DOCTYPE html>
@@ -285,8 +312,9 @@ async function run() {
   for (const video of newVideos) {
     console.log(`Writing article for: ${video.title}`);
     const slug = slugify(video.title);
-    const bodyHTML = await writeArticleWithClaude(video);
-    const html = buildPageHTML({ title: video.title, slug, bodyHTML, videoId: video.id });
+    const thumbnail = thumbnailFor(video.id);
+    const { blogTitle, bodyHTML } = await writeArticleWithClaude(video);
+    const html = buildPageHTML({ blogTitle, videoTitle: video.title, slug, bodyHTML, videoId: video.id, thumbnail });
 
     await mkdir(BLOG_DIR, { recursive: true });
     await writeFile(path.join(BLOG_DIR, `${slug}.html`), html);
@@ -294,7 +322,8 @@ async function run() {
     manifest.published.push({
       id: video.id,
       slug,
-      title: video.title,
+      title: blogTitle,
+      thumbnail,
       eyebrow: guessCategory(video.title),
       excerpt: excerptFrom(bodyHTML),
       publishedAt: video.publishedAt

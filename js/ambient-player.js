@@ -13,7 +13,6 @@ let isPlaying = false;
 const bar = document.getElementById("ambient-bar");
 const toggleBtn = document.getElementById("ambient-toggle");
 const nextBtn = document.getElementById("ambient-next");
-const closeBtn = document.getElementById("ambient-close");
 const titleEl = document.getElementById("ambient-title");
 const iconPlay = document.getElementById("ambient-icon-play");
 const iconPause = document.getElementById("ambient-icon-pause");
@@ -80,9 +79,4 @@ nextBtn.addEventListener("click", () => {
   if (!ytPlayer || typeof ytPlayer.nextVideo !== "function") return;
   ytPlayer.nextVideo();
   titleEl.textContent = "Loading…";
-});
-
-closeBtn.addEventListener("click", () => {
-  if (ytPlayer && typeof ytPlayer.pauseVideo === "function") ytPlayer.pauseVideo();
-  bar.classList.add("hidden");
 });

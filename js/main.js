@@ -16,12 +16,15 @@ const CATEGORY_ICONS = {
 
 const grid = document.getElementById("video-grid");
 const filterBar = document.getElementById("filter-bar");
+const sortSelect = document.getElementById("sort-select");
 const playerModal = document.getElementById("player-modal");
 const playerFrame = document.getElementById("player-frame");
 const playerClose = document.getElementById("player-close");
 
 let allVideos = [];
 let activeCategory = "All";
+let activeSort = "newest";
+let hasViewData = false;
 
 async function loadVideos() {
   let videos;
@@ -39,6 +42,7 @@ async function loadVideos() {
   }
   // Homepage only ever shows the top N (most recent) — the full catalogue lives on YouTube.
   allVideos = videos.slice(0, SITE_CONFIG.homepageVideoCount);
+  hasViewData = allVideos.some(v => typeof v.viewCount === "number");
 }
 
 async function fetchFromYouTube() {
@@ -53,7 +57,7 @@ async function fetchFromYouTube() {
   if (!res.ok) throw new Error(`YouTube API error: ${res.status}`);
   const data = await res.json();
 
-  return data.items
+  const videos = data.items
     .filter(item => item.snippet?.title !== "Private video" && item.snippet?.title !== "Deleted video")
     .map(item => ({
       id: item.snippet.resourceId.videoId,
@@ -63,6 +67,50 @@ async function fetchFromYouTube() {
       publishedAt: item.snippet.publishedAt
     }))
     .reverse(); // newest first
+
+  await enrichWithStats(videos);
+  return videos;
+}
+
+// Adds view count + duration to each video using a single batched call,
+// so we can offer "Most popular" sorting and show track length.
+async function enrichWithStats(videos) {
+  const ids = videos.map(v => v.id).filter(Boolean);
+  if (ids.length === 0) return;
+
+  try {
+    const params = new URLSearchParams({
+      part: "statistics,contentDetails",
+      id: ids.join(","),
+      key: SITE_CONFIG.youtubeApiKey
+    });
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?${params}`);
+    if (!res.ok) throw new Error(`YouTube stats error: ${res.status}`);
+    const data = await res.json();
+
+    const byId = new Map(data.items.map(item => [item.id, item]));
+    videos.forEach(v => {
+      const item = byId.get(v.id);
+      if (!item) return;
+      v.viewCount = Number(item.statistics?.viewCount ?? 0);
+      v.duration = formatDuration(item.contentDetails?.duration);
+    });
+  } catch (err) {
+    console.warn("Could not load view counts/durations:", err);
+  }
+}
+
+function formatDuration(iso) {
+  if (!iso) return "";
+  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return "";
+  const [, h, m, s] = match;
+  const hours = Number(h || 0);
+  const mins = Number(m || 0);
+  const secs = Number(s || 0);
+  const paddedSecs = String(secs).padStart(2, "0");
+  if (hours > 0) return `${hours}:${String(mins).padStart(2, "0")}:${paddedSecs}`;
+  return `${mins}:${paddedSecs}`;
 }
 
 function guessCategory(title) {
@@ -90,10 +138,47 @@ function renderFilters() {
   });
 }
 
+function renderSortOptions() {
+  const options = [
+    { value: "newest", label: "Newest first" },
+    { value: "oldest", label: "Oldest first" },
+    { value: "title", label: "Title (A–Z)" }
+  ];
+  if (hasViewData) {
+    options.splice(2, 0, { value: "popular", label: "Most popular" });
+  }
+
+  sortSelect.innerHTML = options
+    .map(o => `<option value="${o.value}"${o.value === activeSort ? " selected" : ""}>${o.label}</option>`)
+    .join("");
+
+  sortSelect.addEventListener("change", () => {
+    activeSort = sortSelect.value;
+    renderGrid();
+  });
+}
+
+function sortVideos(videos) {
+  const sorted = [...videos];
+  switch (activeSort) {
+    case "oldest":
+      return sorted.reverse();
+    case "popular":
+      return sorted.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
+    case "title":
+      return sorted.sort((a, b) => a.title.localeCompare(b.title));
+    case "newest":
+    default:
+      return sorted;
+  }
+}
+
 function renderGrid() {
-  const filtered = activeCategory === "All"
+  let filtered = activeCategory === "All"
     ? allVideos
     : allVideos.filter(v => v.category === activeCategory);
+
+  filtered = sortVideos(filtered);
 
   grid.innerHTML = filtered.map(cardHTML).join("");
 
@@ -110,6 +195,8 @@ function cardHTML(v) {
     ? `<img src="${v.thumbnail || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`}" alt="${escapeHTML(v.title)}" loading="lazy" />`
     : `<div class="thumb-placeholder">${icon}</div>`;
 
+  const meta = [v.duration, formatViews(v.viewCount)].filter(Boolean).join(" · ");
+
   return `
     <article class="video-card" data-id="${v.id || ""}" tabindex="0">
       <div class="thumb-wrap">
@@ -118,8 +205,16 @@ function cardHTML(v) {
         ${v.duration ? `<span class="duration-tag">${v.duration}</span>` : ""}
       </div>
       <h3>${escapeHTML(v.title)}</h3>
+      ${meta ? `<p class="video-meta">${meta}</p>` : ""}
     </article>
   `;
+}
+
+function formatViews(count) {
+  if (typeof count !== "number") return "";
+  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M views`;
+  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K views`;
+  return `${count} views`;
 }
 
 function escapeHTML(str) {
@@ -181,5 +276,6 @@ function injectStructuredData(videos) {
 (async function init() {
   await loadVideos();
   renderFilters();
+  renderSortOptions();
   renderGrid();
 })();

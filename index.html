@@ -75,7 +75,10 @@
       </div>
       <p class="section-sub">Our ten most recent bhajans, mantras and meditations — updated automatically the moment a new one goes live on YouTube.</p>
     </div>
-    <div id="filter-bar"></div>
+    <div class="video-controls">
+      <div id="filter-bar"></div>
+      <select id="sort-select" class="sort-select" aria-label="Sort videos"></select>
+    </div>
     <div class="video-grid" id="video-grid"></div>
     <div class="load-more-wrap">
       <a class="btn btn-ghost" href="https://www.youtube.com/@soulfulmusicindia" target="_blank" rel="noopener">Browse the full catalogue on YouTube →</a>
@@ -109,19 +112,34 @@
     </div>
     <div class="blog-grid">
       <a class="blog-card" href="blog/radhe-radhe-soulful-krishna-bhajan.html">
-        <span class="eyebrow">Krishna</span>
-        <h3>The meaning behind "Radhe Radhe"</h3>
-        <p>Why repeating Radha's name is considered among the purest forms of Krishna bhakti.</p>
+        <div class="blog-card-thumb">
+          <img src="https://i.ytimg.com/vi/482udqQzgeI/hqdefault.jpg" alt="The Meaning Behind Radhe Radhe" loading="lazy">
+        </div>
+        <div class="blog-card-body">
+          <span class="eyebrow">Krishna</span>
+          <h3>The meaning behind "Radhe Radhe"</h3>
+          <p>Why repeating Radha's name is considered among the purest forms of Krishna bhakti.</p>
+        </div>
       </a>
       <a class="blog-card" href="blog/so-humm-return-to-stillness.html">
-        <span class="eyebrow">Meditation</span>
-        <h3>What "So Humm" actually means</h3>
-        <p>A short meditation mantra with roots in the Upanishads, and how to use it.</p>
+        <div class="blog-card-thumb">
+          <div class="thumb-placeholder">🌀</div>
+        </div>
+        <div class="blog-card-body">
+          <span class="eyebrow">Meditation</span>
+          <h3>What "So Humm" actually means</h3>
+          <p>A short meditation mantra with roots in the Upanishads, and how to use it.</p>
+        </div>
       </a>
       <a class="blog-card" href="blog/index.html">
-        <span class="eyebrow">More</span>
-        <h3>Browse all posts</h3>
-        <p>New articles are added automatically with every release.</p>
+        <div class="blog-card-thumb">
+          <div class="thumb-placeholder">🪔</div>
+        </div>
+        <div class="blog-card-body">
+          <span class="eyebrow">More</span>
+          <h3>Browse all posts</h3>
+          <p>New articles are added automatically with every release.</p>
+        </div>
       </a>
     </div>
   </div>
@@ -167,7 +185,6 @@
     <span class="ambient-title" id="ambient-title">Tap play to begin a soulful session</span>
   </div>
   <button class="ambient-next" id="ambient-next" aria-label="Next track">⏭</button>
-  <button class="ambient-close" id="ambient-close" aria-label="Hide player">✕</button>
   <div id="ambient-yt-player" class="ambient-yt-hidden"></div>
 </div>
 
