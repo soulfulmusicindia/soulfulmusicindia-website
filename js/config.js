@@ -8,7 +8,7 @@
 const SITE_CONFIG = {
   // Paste your YouTube Data API key here once you have it (Step 3 of our setup).
   // Leave blank to keep showing the fallback list in data/videos.json.
-  youtubeApiKey: "AIzaSyCekRHHJTZk0iWshJ25lGbqIiLKFbjLZ2w",
+  youtubeApiKey: "",
 
   // Your playlist ID (already filled in from the link you sent).
   playlistId: "PLrF5Xs7nzfl8srrWmcVcz9dclFK4NSpQ9",
