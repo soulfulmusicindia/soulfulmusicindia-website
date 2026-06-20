@@ -1,0 +1,24 @@
+{
+  "_note": "This is fallback data shown until the YouTube Data API key is connected in js/config.js. Once connected, the site pulls live from your playlist automatically and this file is no longer used. Keep it updated as a backup only if you want.",
+  "videos": [
+    { "id": "fObFN_TxAB0", "title": "HAR HAR SHAMBHO 🔱 Powerful Shiva Chant for Peace, Strength & Divine Protection", "duration": "5:52", "category": "Shiva" },
+    { "id": "", "title": "This Hanuman Chant will give you Goosebumps!", "duration": "3:08", "category": "Hanuman" },
+    { "id": "", "title": "Radha's Divine Love Frequency | Heal Emotional Pain, Heartbreak & Inner Wounds", "duration": "4:00", "category": "Krishna" },
+    { "id": "", "title": "Jai Jai Kedarnath | Har Har Mahadev | Kedarnath Yatra Song 2026", "duration": "4:38", "category": "Shiva" },
+    { "id": "", "title": "SHREEM BRZEE Abundance Meditation | Prosperity, Wealth & Creative Flow", "duration": "4:23", "category": "Meditation" },
+    { "id": "", "title": "Govind Damodar Madhaveti | Krishna Bhajan 🦚 Soulful Devotional Kirtan", "duration": "5:43", "category": "Krishna" },
+    { "id": "", "title": "8-Minute Morning Ganesh Mantra 🙏 Om Gam Ganapataye Namaha", "duration": "8:00", "category": "Ganesh" },
+    { "id": "", "title": "Midnight Krishna Meditation Music | Divine Calm for Focus, Prayer & Inner Peace", "duration": "3:06", "category": "Meditation" },
+    { "id": "", "title": "Om Namah Shivaya | Powerful Shiva Mantra Meditation for Peace & Healing", "duration": "8:00", "category": "Shiva" },
+    { "id": "", "title": "So Humm | Return to Stillness | 10 Min Meditative Journey", "duration": "10:26", "category": "Meditation" },
+    { "id": "", "title": "The Healing Forest 🌿 A Meditation for Digital Detox", "duration": "15:44", "category": "Meditation" },
+    { "id": "", "title": "Your Brain Enters a Different State After 10 Minutes of This | Deep Cosmic Meditation", "duration": "29:31", "category": "Meditation" },
+    { "id": "", "title": "Hanuman Shriram Dootaya Namah | 10 Min Powerful Chant for Protection", "duration": "10:08", "category": "Hanuman" },
+    { "id": "", "title": "Ganga Maiya Ki Aarti | Soulful Aarti That Will Fill Your Heart With Peace 🙏", "duration": "8:00", "category": "Aarti" },
+    { "id": "", "title": "Mere Banke Bihari | Uplifting Krishna Bhajan That Will Make You Dance 💃🙏", "duration": "6:20", "category": "Krishna" },
+    { "id": "", "title": "Nandalala Re Aaja | Krishna Bhajan That Will Touch Your Soul 🙏", "duration": "8:00", "category": "Krishna" },
+    { "id": "", "title": "Kanha Mere Dil Me Aao | New Krishna Bhajan 2026 | Bhakti Song", "duration": "6:13", "category": "Krishna" },
+    { "id": "482udqQzgeI", "title": "Radhe Radhe | Soulful Krishna Bhajan | Hindi Devotional Music", "duration": "6:17", "category": "Krishna" },
+    { "id": "", "title": "This Shiva Mantra Has Comforted Millions for Generations", "duration": "6:52", "category": "Shiva" }
+  ]
+}

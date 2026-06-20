@@ -1,0 +1,39 @@
+name: Auto-publish new blog posts
+
+# Runs every 6 hours, checks the YouTube playlist for new uploads,
+# and writes a blog post for anything new. Also runnable manually
+# from the GitHub "Actions" tab via "Run workflow".
+#
+# Requires two repository secrets (Settings → Secrets and variables → Actions):
+#   YOUTUBE_API_KEY
+#   ANTHROPIC_API_KEY
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-blog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate new blog posts
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node automation/generate-blog-post.mjs
+
+      - name: Commit and push if anything changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Auto-publish: new blog post(s) from YouTube playlist"
+          file_pattern: "blog/* data/published-videos.json"
