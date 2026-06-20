@@ -5,15 +5,15 @@
  * 1. Checks your YouTube playlist for any video not yet blogged about.
  * 2. For each new one, asks Claude (Anthropic API) to write an original,
  *    SEO-friendly article about it.
- * 3. Saves that article as a real page in /blog, and adds it to the
- *    blog index and sitemap.
+ * 3. Saves that article as a real page in /blog, AND rebuilds blog/index.html
+ *    and sitemap.xml so the new post is actually discoverable — not just
+ *    sitting at a URL nobody links to.
  *
  * This script does nothing by itself — it's run automatically on a
  * schedule by the GitHub Action in .github/workflows/auto-update.yml.
  * It needs two secrets set in your GitHub repo settings before it will work:
  *   YOUTUBE_API_KEY
  *   ANTHROPIC_API_KEY
- * (Step 3 and Step 4 of our setup plan — nothing to do here until then.)
  */
 
 import { readFile, writeFile, mkdir } from "fs/promises";
@@ -23,6 +23,24 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
 const PLAYLIST_ID = "PLrF5Xs7nzfl8srrWmcVcz9dclFK4NSpQ9";
 const MANIFEST_PATH = path.join(ROOT, "data", "published-videos.json");
 const BLOG_DIR = path.join(ROOT, "blog");
+const SITE_URL = "https://soulfulmusic.in";
+
+// The two hand-written posts from launch — kept in the index alongside
+// everything the automation writes from here on.
+const HARDCODED_POSTS = [
+  {
+    slug: "radhe-radhe-soulful-krishna-bhajan",
+    title: 'The Meaning Behind "Radhe Radhe"',
+    eyebrow: "Krishna",
+    excerpt: "Why repeating Radha's name is considered among the purest forms of Krishna bhakti."
+  },
+  {
+    slug: "so-humm-return-to-stillness",
+    title: 'What "So Humm" Actually Means',
+    eyebrow: "Meditation",
+    excerpt: "A short meditation mantra with roots in the Upanishads, and how to use it."
+  }
+];
 
 async function getPlaylistVideos() {
   const key = process.env.YOUTUBE_API_KEY;
@@ -66,6 +84,21 @@ function slugify(title) {
     .slice(0, 60);
 }
 
+function guessCategory(title) {
+  const t = title.toLowerCase();
+  if (t.includes("krishna") || t.includes("radha") || t.includes("kanha") || t.includes("govind") || t.includes("banke") || t.includes("nandalala")) return "Krishna";
+  if (t.includes("shiva") || t.includes("shambho") || t.includes("mahadev") || t.includes("kedarnath")) return "Shiva";
+  if (t.includes("hanuman")) return "Hanuman";
+  if (t.includes("ganesh") || t.includes("ganpati")) return "Ganesh";
+  if (t.includes("aarti")) return "Aarti";
+  return "Meditation";
+}
+
+function excerptFrom(bodyHTML) {
+  const text = bodyHTML.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return text.length > 140 ? text.slice(0, 140).trim() + "…" : text;
+}
+
 async function writeArticleWithClaude(video) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("ANTHROPIC_API_KEY is not set.");
@@ -101,22 +134,9 @@ Requirements:
   return data.content.map(b => b.text || "").join("\n");
 }
 
-function buildPageHTML({ title, slug, bodyHTML, videoId }) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${title} | Soulful Music India</title>
-<link rel="canonical" href="https://soulfulmusic.in/blog/${slug}.html">
-<link rel="icon" href="../assets/logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/style.css">
-</head>
-<body>
-<nav class="nav">
+function navAndFooter() {
+  return {
+    nav: `<nav class="nav">
   <div class="wrap">
     <a href="../index.html" class="nav-brand"><img src="../assets/logo.png" alt="Soulful Music India logo">Soulful Music India</a>
     <ul class="nav-links">
@@ -126,7 +146,63 @@ function buildPageHTML({ title, slug, bodyHTML, videoId }) {
     </ul>
     <a class="nav-cta" href="https://www.youtube.com/@soulfulmusicindia?sub_confirmation=1" target="_blank" rel="noopener">Subscribe</a>
   </div>
-</nav>
+</nav>`,
+    footer: `<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <a href="../index.html" class="footer-brand"><img src="../assets/logo.png" alt="Soulful Music India logo">Soulful Music India</a>
+      <div class="footer-social">
+        <a href="https://www.youtube.com/@soulfulmusicindia" target="_blank" rel="noopener" aria-label="YouTube">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.5 6.6s-.2-1.6-.9-2.3c-.8-.9-1.8-.9-2.2-1C17.6 3 12 3 12 3h0s-5.6 0-8.4.3c-.4 0-1.4.1-2.2 1-.7.7-.9 2.3-.9 2.3S0 8.5 0 10.4v1.9c0 1.9.2 3.8.2 3.8s.2 1.6.9 2.3c.8.9 2 .9 2.5 1 1.8.2 7.7.3 7.7.3s5.6 0 8.4-.3c.4 0 1.4-.1 2.2-1 .7-.7.9-2.3.9-2.3s.2-1.9.2-3.8v-1.9c0-1.9-.2-3.8-.2-3.8zM9.5 14.9V7.9l6.3 3.5-6.3 3.5z"/></svg>
+        </a>
+        <a href="https://www.instagram.com/soulfulmusicindia" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=61590270577646" target="_blank" rel="noopener" aria-label="Facebook">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.2h2.4l.4-2.8h-2.8V9.1c0-.8.2-1.4 1.4-1.4h1.5V5.2c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.9H7.8v2.8h2.4V21z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+<div class="ambient-bar" id="ambient-bar">
+  <button class="ambient-toggle" id="ambient-toggle" aria-label="Play ambient music">
+    <svg id="ambient-icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    <svg id="ambient-icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+  </button>
+  <div class="ambient-info">
+    <span class="ambient-label">Soulful Music India Radio</span>
+    <span class="ambient-title" id="ambient-title">Tap play to begin a soulful session</span>
+  </div>
+  <button class="ambient-next" id="ambient-next" aria-label="Next track">⏭</button>
+  <button class="ambient-close" id="ambient-close" aria-label="Hide player">✕</button>
+  <div id="ambient-yt-player" class="ambient-yt-hidden"></div>
+</div>
+<script src="../js/config.js"></script>
+<script src="../js/ambient-player.js"></script>`
+  };
+}
+
+function buildPageHTML({ title, slug, bodyHTML, videoId }) {
+  const { nav, footer } = navAndFooter();
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title} | Soulful Music India</title>
+<link rel="canonical" href="${SITE_URL}/blog/${slug}.html">
+<link rel="icon" href="../assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":${JSON.stringify(title)},"publisher":{"@type":"Organization","name":"Soulful Music India"},"mainEntityOfPage":"${SITE_URL}/blog/${slug}.html"}
+</script>
+</head>
+<body>
+${nav}
 <section class="article-header">
   <div class="wrap">
     <h1>${title}</h1>
@@ -137,20 +213,62 @@ function buildPageHTML({ title, slug, bodyHTML, videoId }) {
   <div class="article-video"><iframe src="https://www.youtube.com/embed/${videoId}" title="${title}" allowfullscreen></iframe></div>
   ${bodyHTML}
 </article>
-<footer>
-  <div class="wrap">
-    <div class="footer-grid">
-      <a href="../index.html" class="footer-brand"><img src="../assets/logo.png" alt="Soulful Music India logo">Soulful Music India</a>
-      <div class="footer-social">
-        <a href="https://www.youtube.com/@soulfulmusicindia" target="_blank" rel="noopener">YouTube</a>
-        <a href="https://www.instagram.com/soulfulmusicindia" target="_blank" rel="noopener">Instagram</a>
-        <a href="https://www.facebook.com/profile.php?id=61590270577646" target="_blank" rel="noopener">Facebook</a>
-      </div>
-    </div>
-  </div>
-</footer>
+${footer}
 </body>
 </html>`;
+}
+
+function buildBlogIndexHTML(posts) {
+  const { nav, footer } = navAndFooter();
+  const cards = posts.map(p => `
+      <a class="blog-card" href="${p.slug}.html">
+        <span class="eyebrow">${p.eyebrow}</span>
+        <h3>${p.title}</h3>
+        <p>${p.excerpt}</p>
+      </a>`).join("");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog | Soulful Music India</title>
+<meta name="description" content="The meaning, history and feeling behind every bhajan, mantra and meditation from Soulful Music India.">
+<link rel="canonical" href="${SITE_URL}/blog/index.html">
+<link rel="icon" href="../assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+${nav}
+<section class="article-header">
+  <div class="wrap">
+    <span class="eyebrow">Blog</span>
+    <h1>The meaning behind the music</h1>
+    <p class="article-meta">A new article for every bhajan, mantra and meditation — added automatically with each release.</p>
+  </div>
+</section>
+<section class="section">
+  <div class="wrap">
+    <div class="blog-index-grid" id="blog-index-grid">${cards}
+    </div>
+  </div>
+</section>
+${footer}
+</body>
+</html>`;
+}
+
+function buildSitemap(posts) {
+  const urls = [
+    { loc: `${SITE_URL}/`, priority: "1.0" },
+    { loc: `${SITE_URL}/blog/index.html`, priority: "0.8" },
+    ...posts.map(p => ({ loc: `${SITE_URL}/blog/${p.slug}.html`, priority: "0.6" }))
+  ];
+  const body = urls.map(u => `  <url>\n    <loc>${u.loc}</loc>\n    <priority>${u.priority}</priority>\n  </url>`).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
 async function run() {
@@ -173,11 +291,25 @@ async function run() {
     await mkdir(BLOG_DIR, { recursive: true });
     await writeFile(path.join(BLOG_DIR, `${slug}.html`), html);
 
-    manifest.published.push({ id: video.id, slug, title: video.title, publishedAt: video.publishedAt });
+    manifest.published.push({
+      id: video.id,
+      slug,
+      title: video.title,
+      eyebrow: guessCategory(video.title),
+      excerpt: excerptFrom(bodyHTML),
+      publishedAt: video.publishedAt
+    });
   }
 
   await saveManifest(manifest);
-  console.log(`Done. Added ${newVideos.length} new article(s).`);
+
+  // Rebuild the blog index and sitemap so every post — hand-written or
+  // auto-generated — is actually linked and discoverable.
+  const allPosts = [...HARDCODED_POSTS, ...manifest.published];
+  await writeFile(path.join(BLOG_DIR, "index.html"), buildBlogIndexHTML(allPosts));
+  await writeFile(path.join(ROOT, "sitemap.xml"), buildSitemap(allPosts));
+
+  console.log(`Done. Added ${newVideos.length} new article(s) and rebuilt the blog index + sitemap.`);
 }
 
 run().catch(err => {
