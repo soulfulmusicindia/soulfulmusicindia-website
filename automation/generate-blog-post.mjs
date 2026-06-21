@@ -201,7 +201,7 @@ function navAndFooter() {
   };
 }
 
-function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbnail }) {
+function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbnail, videoDescription, publishedAt }) {
   const { nav, footer } = navAndFooter();
   return `<!DOCTYPE html>
 <html lang="en">
@@ -218,6 +218,9 @@ function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbna
 <link rel="stylesheet" href="../css/style.css">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Article","headline":${JSON.stringify(blogTitle)},"image":"${thumbnail}","publisher":{"@type":"Organization","name":"Soulful Music India"},"mainEntityOfPage":"${SITE_URL}/blog/${slug}.html"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoObject","name":${JSON.stringify(videoTitle)},"description":${JSON.stringify((videoDescription && videoDescription.trim()) || blogTitle)},"thumbnailUrl":"${thumbnail}","uploadDate":"${publishedAt || ""}","contentUrl":"https://www.youtube.com/watch?v=${videoId}","embedUrl":"https://www.youtube.com/embed/${videoId}"}
 </script>
 </head>
 <body>
