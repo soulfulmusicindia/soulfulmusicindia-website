@@ -59,9 +59,10 @@ async function fetchFromYouTube() {
 
   const videos = data.items
     .filter(item => item.snippet?.title !== "Private video" && item.snippet?.title !== "Deleted video")
-    .map(item => ({
+   .map(item => ({
       id: item.snippet.resourceId.videoId,
       title: item.snippet.title,
+      description: item.snippet.description,
       thumbnail: item.snippet.thumbnails?.maxres?.url || item.snippet.thumbnails?.high?.url,
       category: guessCategory(item.snippet.title),
       publishedAt: item.snippet.publishedAt
@@ -93,6 +94,7 @@ async function enrichWithStats(videos) {
       const item = byId.get(v.id);
       if (!item) return;
       v.viewCount = Number(item.statistics?.viewCount ?? 0);
+      v.durationISO = item.contentDetails?.duration || "";
       v.duration = formatDuration(item.contentDetails?.duration);
     });
   } catch (err) {
@@ -250,17 +252,23 @@ function injectStructuredData(videos) {
 
   const itemListElement = videos
     .filter(v => v.id)
-    .map((v, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      item: {
+    .map((v, i) => {
+      const videoObject = {
         "@type": "VideoObject",
         name: v.title,
+        description: (v.description && v.description.trim()) || v.title,
         thumbnailUrl: v.thumbnail || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
         contentUrl: `https://www.youtube.com/watch?v=${v.id}`,
-        embedUrl: `https://www.youtube.com/embed/${v.id}`
-      }
-    }));
+        embedUrl: `https://www.youtube.com/embed/${v.id}`,
+        uploadDate: v.publishedAt
+      };
+      if (v.durationISO) videoObject.duration = v.durationISO;
+      return {
+        "@type": "ListItem",
+        position: i + 1,
+        item: videoObject
+      };
+    });
 
   const script = document.createElement("script");
   script.type = "application/ld+json";
