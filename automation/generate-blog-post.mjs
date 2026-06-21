@@ -314,8 +314,7 @@ async function run() {
     const slug = slugify(video.title);
     const thumbnail = thumbnailFor(video.id);
     const { blogTitle, bodyHTML } = await writeArticleWithClaude(video);
-    const html = buildPageHTML({ blogTitle, videoTitle: video.title, slug, bodyHTML, videoId: video.id, thumbnail });
-
+const html = buildPageHTML({ blogTitle, videoTitle: video.title, slug, bodyHTML, videoId: video.id, thumbnail, videoDescription: video.description, publishedAt: video.publishedAt });
     await mkdir(BLOG_DIR, { recursive: true });
     await writeFile(path.join(BLOG_DIR, `${slug}.html`), html);
 
