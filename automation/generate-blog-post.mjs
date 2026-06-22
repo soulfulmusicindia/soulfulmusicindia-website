@@ -314,11 +314,6 @@ async function run() {
   const publishedIds = new Set(manifest.published.map(p => p.id));
   const newVideos = videos.filter(v => !publishedIds.has(v.id));
 
-  if (newVideos.length === 0) {
-    console.log("No new videos. Nothing to do.");
-    return;
-  }
-
   for (const video of newVideos) {
     console.log(`Writing article for: ${video.title}`);
     const slug = slugify(video.title);
@@ -340,12 +335,13 @@ async function run() {
     });
   }
 
-  await saveManifest(manifest);
+  if (newVideos.length > 0) {
+    await saveManifest(manifest);
+  }
 
-  // Rebuild the blog index and sitemap so every post — hand-written or
-  // auto-generated — is actually linked and discoverable.
-  // (Dedupe by slug: the manifest is seeded with the Radhe Radhe entry to
-  // stop it being regenerated, but HARDCODED_POSTS already represents it.)
+  // Always rebuild the blog index and sitemap — even with zero new videos,
+  // since this also keeps sort order correct any time the template logic
+  // changes (without needing to wait for a new upload).
   const manifestPosts = manifest.published.filter(
     p => !HARDCODED_POSTS.some(h => h.slug === p.slug)
   );
