@@ -186,18 +186,6 @@ function navAndFooter() {
     </div>
   </div>
 </footer>
-<div class="ambient-bar" id="ambient-bar">
-  <button class="ambient-toggle" id="ambient-toggle" aria-label="Play ambient music">
-    <svg id="ambient-icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-    <svg id="ambient-icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
-  </button>
-  <div class="ambient-info">
-    <span class="ambient-label">Soulful Music India Radio</span>
-    <span class="ambient-title" id="ambient-title">Tap play to begin a soulful session</span>
-  </div>
-  <button class="ambient-next" id="ambient-next" aria-label="Next track">⏭</button>
-  <div id="ambient-yt-player" class="ambient-yt-hidden"></div>
-</div>
 <script src="../js/config.js"></script>
 <script src="../js/ambient-player.js"></script>`
   };
