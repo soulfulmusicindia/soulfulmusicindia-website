@@ -748,10 +748,27 @@ footer {
   width: 48px;
   height: 48px;
   border-radius: 8px;
-  object-fit: cover;
+  object-fit: contain;
   flex-shrink: 0;
   background: var(--ember-soft);
 }
+
+.ambient-youtube-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border: 1px solid var(--ember);
+  border-radius: 999px;
+  color: var(--cream-dim);
+  text-decoration: none;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.ambient-youtube-btn svg { width: 16px; height: 16px; }
+.ambient-youtube-btn:hover { border-color: var(--marigold); color: var(--marigold-bright); }
 
 .ambient-controls {
   display: flex;
@@ -830,4 +847,6 @@ footer {
   .ambient-bar { padding: 8px 12px; gap: 8px; }
   .ambient-thumb { width: 40px; height: 40px; }
   .ambient-label { display: none; }
+  .ambient-youtube-text { display: none; }
+  .ambient-youtube-btn { padding: 9px 10px; }
 }
