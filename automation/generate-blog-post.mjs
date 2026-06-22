@@ -165,7 +165,12 @@ function navAndFooter() {
       <li><a href="../index.html#about">About</a></li>
       <li><a href="index.html">Blog</a></li>
     </ul>
-    <a class="nav-cta" href="https://www.youtube.com/@soulfulmusicindia?sub_confirmation=1" target="_blank" rel="noopener">Subscribe</a>
+    <div class="nav-right">
+      <a class="nav-cta" href="https://www.youtube.com/@soulfulmusicindia?sub_confirmation=1" target="_blank" rel="noopener">Subscribe</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+    </div>
   </div>
 </nav>`,
     footer: `<footer>
