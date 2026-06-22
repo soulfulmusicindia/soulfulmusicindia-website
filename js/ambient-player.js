@@ -39,6 +39,17 @@ const BAR_HTML = `
 
 document.body.insertAdjacentHTML("beforeend", BAR_HTML);
 
+// Mobile nav menu — the toggle button exists statically in each page's
+// header; this just wires up the open/close behavior.
+const navToggle = document.getElementById("nav-toggle");
+const navLinks = document.querySelector(".nav-links");
+if (navToggle && navLinks) {
+  navToggle.addEventListener("click", () => navLinks.classList.toggle("open"));
+  navLinks.querySelectorAll("a").forEach(link =>
+    link.addEventListener("click", () => navLinks.classList.remove("open"))
+  );
+}
+
 let ytPlayer = null;
 let isPlaying = false;
 
