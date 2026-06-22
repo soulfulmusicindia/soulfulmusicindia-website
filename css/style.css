@@ -745,10 +745,10 @@ footer {
 }
 
 .ambient-thumb {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  object-fit: contain;
+  width: 64px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
   flex-shrink: 0;
   background: var(--ember-soft);
 }
@@ -845,7 +845,7 @@ footer {
 
 @media (max-width: 600px) {
   .ambient-bar { padding: 8px 12px; gap: 8px; }
-  .ambient-thumb { width: 40px; height: 40px; }
+  .ambient-thumb { width: 52px; height: 30px; }
   .ambient-label { display: none; }
   .ambient-youtube-text { display: none; }
   .ambient-youtube-btn { padding: 9px 10px; }
