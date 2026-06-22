@@ -738,13 +738,43 @@ footer {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 20px;
+  padding: 10px 20px;
   background: rgba(21, 16, 11, 0.97);
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--ember-soft);
 }
 
-.ambient-bar.hidden { display: none; }
+.ambient-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--ember-soft);
+}
+
+.ambient-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ambient-side-btn {
+  background: transparent;
+  border: none;
+  color: var(--cream-dim);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.ambient-side-btn svg { width: 20px; height: 20px; }
+.ambient-side-btn:hover { color: var(--marigold-bright); }
 
 .ambient-toggle {
   width: 42px;
@@ -787,19 +817,6 @@ footer {
   text-overflow: ellipsis;
 }
 
-.ambient-next {
-  background: transparent;
-  border: none;
-  color: var(--cream-dim);
-  font-size: 1.15rem;
-  cursor: pointer;
-  padding: 6px;
-  flex-shrink: 0;
-  line-height: 1;
-}
-
-.ambient-next:hover { color: var(--marigold-bright); }
-
 .ambient-yt-hidden {
   position: absolute;
   width: 1px;
@@ -810,6 +827,7 @@ footer {
 }
 
 @media (max-width: 600px) {
-  .ambient-bar { padding: 10px 14px; gap: 10px; }
+  .ambient-bar { padding: 8px 12px; gap: 8px; }
+  .ambient-thumb { width: 40px; height: 40px; }
   .ambient-label { display: none; }
 }
