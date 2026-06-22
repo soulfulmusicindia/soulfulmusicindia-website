@@ -33,14 +33,16 @@ const HARDCODED_POSTS = [
     title: 'The Meaning Behind "Radhe Radhe"',
     eyebrow: "Krishna",
     thumbnail: thumbnailFor("482udqQzgeI"),
-    excerpt: "Why repeating Radha's name is considered among the purest forms of Krishna bhakti."
+    excerpt: "Why repeating Radha's name is considered among the purest forms of Krishna bhakti.",
+    publishedAt: "2026-01-01T00:00:00Z"
   },
   {
     slug: "so-humm-return-to-stillness",
     title: 'What "So Humm" Actually Means',
     eyebrow: "Meditation",
     thumbnail: null,
-    excerpt: "A short meditation mantra with roots in the Upanishads, and how to use it."
+    excerpt: "A short meditation mantra with roots in the Upanishads, and how to use it.",
+    publishedAt: "2026-01-01T00:00:00Z"
   }
 ];
 
@@ -201,7 +203,7 @@ function navAndFooter() {
   };
 }
 
-function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbnail, videoDescription, publishedAt }) {
+function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbnail }) {
   const { nav, footer } = navAndFooter();
   return `<!DOCTYPE html>
 <html lang="en">
@@ -218,9 +220,6 @@ function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbna
 <link rel="stylesheet" href="../css/style.css">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Article","headline":${JSON.stringify(blogTitle)},"image":"${thumbnail}","publisher":{"@type":"Organization","name":"Soulful Music India"},"mainEntityOfPage":"${SITE_URL}/blog/${slug}.html"}
-</script>
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"VideoObject","name":${JSON.stringify(videoTitle)},"description":${JSON.stringify((videoDescription && videoDescription.trim()) || blogTitle)},"thumbnailUrl":"${thumbnail}","uploadDate":"${publishedAt || ""}","contentUrl":"https://www.youtube.com/watch?v=${videoId}","embedUrl":"https://www.youtube.com/embed/${videoId}"}
 </script>
 </head>
 <body>
@@ -317,7 +316,8 @@ async function run() {
     const slug = slugify(video.title);
     const thumbnail = thumbnailFor(video.id);
     const { blogTitle, bodyHTML } = await writeArticleWithClaude(video);
-const html = buildPageHTML({ blogTitle, videoTitle: video.title, slug, bodyHTML, videoId: video.id, thumbnail, videoDescription: video.description, publishedAt: video.publishedAt });
+    const html = buildPageHTML({ blogTitle, videoTitle: video.title, slug, bodyHTML, videoId: video.id, thumbnail });
+
     await mkdir(BLOG_DIR, { recursive: true });
     await writeFile(path.join(BLOG_DIR, `${slug}.html`), html);
 
@@ -341,7 +341,9 @@ const html = buildPageHTML({ blogTitle, videoTitle: video.title, slug, bodyHTML,
   const manifestPosts = manifest.published.filter(
     p => !HARDCODED_POSTS.some(h => h.slug === p.slug)
   );
-  const allPosts = [...HARDCODED_POSTS, ...manifestPosts];
+  const allPosts = [...HARDCODED_POSTS, ...manifestPosts].sort(
+    (a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0)
+  );
   await writeFile(path.join(BLOG_DIR, "index.html"), buildBlogIndexHTML(allPosts));
   await writeFile(path.join(ROOT, "sitemap.xml"), buildSitemap(allPosts));
 
