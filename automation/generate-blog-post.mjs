@@ -118,15 +118,25 @@ Context from the video's own description (for background only — do not copy it
 Requirements:
 - First, write a short, human, editorial article title — NOT the video title. It should read like a real blog headline about the meaning or theme (e.g. for a video called "HAR HAR SHAMBHO | Powerful Shiva Chant", a good article title would be something like "The Meaning Behind Har Har Shambho" or "Why Devotees Chant Har Har Shambho"). Keep it under 60 characters.
 - Then write the article body: plain, warm, accessible English for a general devotional/spiritual audience.
+- The FIRST sentence of the body must directly answer "what does this mean" or "what is this" in one clear, standalone sentence — no scene-setting or story before it. This sentence should make sense even with zero other context. After that direct answer, you can move into narrative, history, or color.
 - Include the meaning/significance of the deity, mantra, or practice involved.
 - Include practical guidance on when/how someone might use this track (puja, meditation, festivals, etc).
 - Structure the body with 2-4 <h2> subheadings.
+- Each section should lead with its own direct one-sentence answer before elaborating — write so each section could be read on its own and still make sense.
 - Do not invent specific scriptural quotations or citations.
+- Finally, write exactly 3 short FAQ-style question-and-answer pairs a real person might ask about this topic (e.g. "What does X mean?", "When should I chant X?"). Answers must be 1-2 plain sentences each, self-contained, no fluff.
 
 Output format — exactly this, nothing else before or after:
 TITLE: <the article title, plain text, no quotes, no HTML>
 ---
-<the article body as clean HTML using only <p> and <h2> tags, no markdown, no wrapper tags>`;
+<the article body as clean HTML using only <p> and <h2> tags, no markdown, no wrapper tags>
+---FAQ---
+Q: <question 1>
+A: <answer 1>
+Q: <question 2>
+A: <answer 2>
+Q: <question 3>
+A: <answer 3>`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -137,7 +147,7 @@ TITLE: <the article title, plain text, no quotes, no HTML>
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 1500,
+      max_tokens: 1700,
       messages: [{ role: "user", content: prompt }]
     })
   });
@@ -146,13 +156,22 @@ TITLE: <the article title, plain text, no quotes, no HTML>
   const data = await res.json();
   const raw = data.content.map(b => b.text || "").join("\n").trim();
 
-  const titleMatch = raw.match(/^TITLE:\s*(.+?)\s*\n---\s*\n([\s\S]+)$/);
+  const titleMatch = raw.match(/^TITLE:\s*(.+?)\s*\n---\s*\n([\s\S]+?)\n---FAQ---\n([\s\S]+)$/);
   if (!titleMatch) {
     // Fallback: if the model didn't follow the format exactly, use the
-    // video title rather than fail the whole run.
-    return { blogTitle: video.title, bodyHTML: raw };
+    // video title and skip FAQ rather than fail the whole run.
+    return { blogTitle: video.title, bodyHTML: raw, faqItems: [] };
   }
-  return { blogTitle: titleMatch[1].trim(), bodyHTML: titleMatch[2].trim() };
+
+  const faqBlock = titleMatch[3].trim();
+  const faqItems = [];
+  const qaRegex = /Q:\s*(.+?)\s*\nA:\s*(.+?)(?=\n\s*Q:|$)/gs;
+  let m;
+  while ((m = qaRegex.exec(faqBlock)) !== null) {
+    faqItems.push({ question: m[1].trim(), answer: m[2].trim() });
+  }
+
+  return { blogTitle: titleMatch[1].trim(), bodyHTML: titleMatch[2].trim(), faqItems };
 }
 
 function navAndFooter() {
@@ -210,7 +229,33 @@ function followCTA() {
   </div>`;
 }
 
-function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbnail }) {
+function faqSectionHTML(faqItems) {
+  if (!faqItems || faqItems.length === 0) return "";
+  const items = faqItems.map(f => `
+    <div class="faq-item">
+      <h3>${f.question}</h3>
+      <p>${f.answer}</p>
+    </div>`).join("");
+  return `<div class="article-faq">
+    <h2>Common questions</h2>
+    ${items}
+  </div>`;
+}
+
+function faqSchema(faqItems) {
+  if (!faqItems || faqItems.length === 0) return "";
+  return `<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":${JSON.stringify(
+    faqItems.map(f => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer }
+    }))
+  )}}
+</script>`;
+}
+
+function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbnail, faqItems }) {
   const { nav, footer } = navAndFooter();
   return `<!DOCTYPE html>
 <html lang="en">
@@ -228,6 +273,7 @@ function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbna
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Article","headline":${JSON.stringify(blogTitle)},"image":"${thumbnail}","publisher":{"@type":"Organization","name":"Soulful Music India"},"mainEntityOfPage":"${SITE_URL}/blog/${slug}.html"}
 </script>
+${faqSchema(faqItems)}
 </head>
 <body>
 ${nav}
@@ -240,6 +286,7 @@ ${nav}
   <a class="article-back" href="index.html">← Back to blog</a>
   <div class="article-cover"><img src="${thumbnail}" alt="${videoTitle}" loading="lazy"></div>
   ${bodyHTML}
+  ${faqSectionHTML(faqItems)}
   <div class="article-video"><iframe src="https://www.youtube.com/embed/${videoId}" title="${videoTitle}" allowfullscreen></iframe></div>
   ${followCTA()}
 </article>
@@ -318,8 +365,8 @@ async function run() {
     console.log(`Writing article for: ${video.title}`);
     const slug = slugify(video.title);
     const thumbnail = thumbnailFor(video.id);
-    const { blogTitle, bodyHTML } = await writeArticleWithClaude(video);
-    const html = buildPageHTML({ blogTitle, videoTitle: video.title, slug, bodyHTML, videoId: video.id, thumbnail });
+    const { blogTitle, bodyHTML, faqItems } = await writeArticleWithClaude(video);
+    const html = buildPageHTML({ blogTitle, videoTitle: video.title, slug, bodyHTML, videoId: video.id, thumbnail, faqItems });
 
     await mkdir(BLOG_DIR, { recursive: true });
     await writeFile(path.join(BLOG_DIR, `${slug}.html`), html);
