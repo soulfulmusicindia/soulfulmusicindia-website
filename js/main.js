@@ -40,7 +40,9 @@ async function loadVideos() {
     const json = await res.json();
     videos = json.videos.filter(v => v.title);
   }
-  // Homepage only ever shows the top N (most recent) — the full catalogue lives on YouTube.
+  // Sort by real upload date first, THEN take the top N — guarantees this
+  // is genuinely the newest videos, not just whatever order the API returned.
+  videos = [...videos].sort((a, b) => dateValue(b.publishedAt) - dateValue(a.publishedAt));
   allVideos = videos.slice(0, SITE_CONFIG.homepageVideoCount);
   hasViewData = allVideos.some(v => typeof v.viewCount === "number");
 }
@@ -59,10 +61,9 @@ async function fetchFromYouTube() {
 
   const videos = data.items
     .filter(item => item.snippet?.title !== "Private video" && item.snippet?.title !== "Deleted video")
-   .map(item => ({
+    .map(item => ({
       id: item.snippet.resourceId.videoId,
       title: item.snippet.title,
-      description: item.snippet.description,
       thumbnail: item.snippet.thumbnails?.maxres?.url || item.snippet.thumbnails?.high?.url,
       category: guessCategory(item.snippet.title),
       publishedAt: item.snippet.publishedAt
@@ -94,7 +95,6 @@ async function enrichWithStats(videos) {
       const item = byId.get(v.id);
       if (!item) return;
       v.viewCount = Number(item.statistics?.viewCount ?? 0);
-      v.durationISO = item.contentDetails?.duration || "";
       v.duration = formatDuration(item.contentDetails?.duration);
     });
   } catch (err) {
@@ -160,18 +160,23 @@ function renderSortOptions() {
   });
 }
 
+function dateValue(iso) {
+  const t = iso ? new Date(iso).getTime() : NaN;
+  return Number.isNaN(t) ? 0 : t;
+}
+
 function sortVideos(videos) {
   const sorted = [...videos];
   switch (activeSort) {
     case "oldest":
-      return sorted.reverse();
+      return sorted.sort((a, b) => dateValue(a.publishedAt) - dateValue(b.publishedAt));
     case "popular":
       return sorted.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
     case "title":
       return sorted.sort((a, b) => a.title.localeCompare(b.title));
     case "newest":
     default:
-      return sorted;
+      return sorted.sort((a, b) => dateValue(b.publishedAt) - dateValue(a.publishedAt));
   }
 }
 
@@ -252,23 +257,17 @@ function injectStructuredData(videos) {
 
   const itemListElement = videos
     .filter(v => v.id)
-    .map((v, i) => {
-      const videoObject = {
+    .map((v, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
         "@type": "VideoObject",
         name: v.title,
-        description: (v.description && v.description.trim()) || v.title,
         thumbnailUrl: v.thumbnail || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
         contentUrl: `https://www.youtube.com/watch?v=${v.id}`,
-        embedUrl: `https://www.youtube.com/embed/${v.id}`,
-        uploadDate: v.publishedAt
-      };
-      if (v.durationISO) videoObject.duration = v.durationISO;
-      return {
-        "@type": "ListItem",
-        position: i + 1,
-        item: videoObject
-      };
-    });
+        embedUrl: `https://www.youtube.com/embed/${v.id}`
+      }
+    }));
 
   const script = document.createElement("script");
   script.type = "application/ld+json";
