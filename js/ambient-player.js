@@ -30,6 +30,10 @@ const BAR_HTML = `
     <span class="ambient-label">Soulful Music India Radio</span>
     <span class="ambient-title" id="ambient-title">Tap play to begin a soulful session</span>
   </div>
+  <a class="ambient-youtube-btn" id="ambient-youtube-link" href="https://www.youtube.com/@soulfulmusicindia" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.5 6.6s-.2-1.6-.9-2.3c-.8-.9-1.8-.9-2.2-1C17.6 3 12 3 12 3h0s-5.6 0-8.4.3c-.4 0-1.4.1-2.2 1-.7.7-.9 2.3-.9 2.3S0 8.5 0 10.4v1.9c0 1.9.2 3.8.2 3.8s.2 1.6.9 2.3c.8.9 2 .9 2.5 1 1.8.2 7.7.3 7.7.3s5.6 0 8.4-.3c.4 0 1.4-.1 2.2-1 .7-.7.9-2.3.9-2.3s.2-1.9.2-3.8v-1.9c0-1.9-.2-3.8-.2-3.8zM9.5 14.9V7.9l6.3 3.5-6.3 3.5z"/></svg>
+    <span class="ambient-youtube-text">Watch on YouTube</span>
+  </a>
   <div id="ambient-yt-player" class="ambient-yt-hidden"></div>
 </div>`;
 
@@ -43,6 +47,7 @@ const prevBtn = document.getElementById("ambient-prev");
 const nextBtn = document.getElementById("ambient-next");
 const titleEl = document.getElementById("ambient-title");
 const thumbEl = document.getElementById("ambient-thumb");
+const youtubeLink = document.getElementById("ambient-youtube-link");
 const iconPlay = document.getElementById("ambient-icon-play");
 const iconPause = document.getElementById("ambient-icon-pause");
 
@@ -83,7 +88,10 @@ function updateNowPlaying() {
   try {
     const data = ytPlayer.getVideoData();
     if (data?.title) titleEl.textContent = data.title;
-    if (data?.video_id) thumbEl.src = `https://i.ytimg.com/vi/${data.video_id}/hqdefault.jpg`;
+    if (data?.video_id) {
+      thumbEl.src = `https://i.ytimg.com/vi/${data.video_id}/hqdefault.jpg`;
+      youtubeLink.href = `https://www.youtube.com/watch?v=${data.video_id}`;
+    }
   } catch {
     /* metadata not ready yet, ignore */
   }
