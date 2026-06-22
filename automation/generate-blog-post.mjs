@@ -203,6 +203,20 @@ function navAndFooter() {
   };
 }
 
+function followCTA() {
+  return `<div class="article-follow">
+    <p>Enjoyed this? Follow Soulful Music India for more.</p>
+    <div class="footer-social" style="justify-content:center;">
+      <a href="https://www.instagram.com/soulfulmusicindia" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>
+      </a>
+      <a href="https://www.facebook.com/profile.php?id=61590270577646" target="_blank" rel="noopener" aria-label="Facebook">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.2h2.4l.4-2.8h-2.8V9.1c0-.8.2-1.4 1.4-1.4h1.5V5.2c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.9H7.8v2.8h2.4V21z"/></svg>
+      </a>
+    </div>
+  </div>`;
+}
+
 function buildPageHTML({ blogTitle, videoTitle, slug, bodyHTML, videoId, thumbnail }) {
   const { nav, footer } = navAndFooter();
   return `<!DOCTYPE html>
@@ -234,6 +248,7 @@ ${nav}
   <div class="article-cover"><img src="${thumbnail}" alt="${videoTitle}" loading="lazy"></div>
   ${bodyHTML}
   <div class="article-video"><iframe src="https://www.youtube.com/embed/${videoId}" title="${videoTitle}" allowfullscreen></iframe></div>
+  ${followCTA()}
 </article>
 ${footer}
 </body>
