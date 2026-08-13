@@ -215,6 +215,16 @@ function navAndFooter() {
   };
 }
 
+// Read counter under the post title. Starts hidden — js/view-counter.js
+// reveals it once the count comes back, so a slow counter service never
+// leaves a broken-looking placeholder on the page.
+function viewCounterHTML() {
+  return `    <p class="article-views" data-view-count hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M1.8 12S5.4 5.5 12 5.5 22.2 12 22.2 12 18.6 18.5 12 18.5 1.8 12 1.8 12Z"/><circle cx="12" cy="12" r="3.2"/></svg>
+      <b data-view-count-number>0</b> <span data-view-count-label>reads</span>
+    </p>`;
+}
+
 function followCTA() {
   return `<div class="article-follow">
     <p>Enjoyed this? Follow Soulful Music India for more.</p>
@@ -280,6 +290,7 @@ ${nav}
 <section class="article-header">
   <div class="wrap">
     <h1>${blogTitle}</h1>
+${viewCounterHTML()}
   </div>
 </section>
 <article class="article-body">
@@ -291,6 +302,7 @@ ${nav}
   ${followCTA()}
 </article>
 ${footer}
+<script src="../js/view-counter.js"></script>
 </body>
 </html>`;
 }

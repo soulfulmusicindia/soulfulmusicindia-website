@@ -48,8 +48,22 @@ index.html              → homepage
 css/style.css           → all styling
 js/config.js            → the one file you edit by hand (API key, links)
 js/main.js              → loads videos, live or fallback
+js/view-counter.js      → the read counter shown under each blog post title
 data/videos.json         → fallback video list (used until API key is added)
 blog/                    → blog posts + index
 automation/              → the auto-blog-writer script
 .github/workflows/       → the schedule that runs it automatically
 ```
+
+## Blog read counts
+
+Every blog post shows how many times it has been read, just under the title.
+
+The site is static (GitHub Pages), so there's no server of ours to keep the
+tally in — it's held by a free public counter service, no account and no cost.
+A reader is only counted once every 6 hours, so refreshing doesn't inflate the
+number, and if the service is ever down the counter just doesn't appear.
+
+All the knobs live in one place, `js/config.js` under `viewCounter`: set
+`enabled: false` to hide it everywhere, or change `repeatAfterHours`. New
+auto-generated posts get the counter automatically.

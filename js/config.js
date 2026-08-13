@@ -23,6 +23,18 @@ const SITE_CONFIG = {
     facebook: "https://www.facebook.com/profile.php?id=61590270577646"
   },
 
+  // Blog view counter. The tally is kept by a free public counter service —
+  // no account, no cost, nothing to maintain. Set enabled to false and the
+  // counter quietly disappears from every post. If the service ever goes
+  // away, any host with the same /hit/<namespace>/<key> shape drops straight
+  // in as the endpoint.
+  viewCounter: {
+    enabled: true,
+    endpoint: "https://abacus.jasoncameron.dev",
+    namespace: "soulfulmusic-in",
+    repeatAfterHours: 6   // same reader isn't re-counted inside this window
+  },
+
   siteName: "Soulful Music India",
   tagline: "Bhajans, Mantras & Meditations for the Soul",
   domain: "https://soulfulmusic.in"
