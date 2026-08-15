@@ -249,6 +249,12 @@ a { color: inherit; }
 }
 .btn-ghost:hover { border-color: var(--marigold); color: var(--marigold-bright); }
 
+/* Spotify's own green, so the button is recognisable at a glance without
+   fighting the marigold palette — the border stays warm until hover. */
+.btn-spotify svg { width: 18px; height: 18px; color: #1db954; }
+.btn-spotify:hover { border-color: #1db954; color: var(--cream); }
+.btn-spotify:hover svg { color: #1ed760; }
+
 /* ---------- SECTION HEADERS ---------- */
 
 .section {

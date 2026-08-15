@@ -19,6 +19,7 @@ const SITE_CONFIG = {
 
   social: {
     youtube: "https://www.youtube.com/@soulfulmusicindia",
+    spotify: "https://open.spotify.com/artist/1DltOrzqeKYCFvwYXrrSKb",
     instagram: "https://www.instagram.com/soulfulmusicindia",
     facebook: "https://www.facebook.com/profile.php?id=61590270577646"
   },
